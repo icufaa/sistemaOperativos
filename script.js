@@ -1,183 +1,174 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const grid = document.querySelector('.grid');
-    const squares = [];
-    const width = 10;
-    const scoreDisplay = document.getElementById('score');
-    let score = 0;
-    let timerId;
+// Configuración inicial
+const MEMORY_SIZE = 1024; // Tamaño de la memoria principal
+const BLOCK_SIZE = 128; // Cada bloque es de 128MB
+const TOTAL_BLOCKS = MEMORY_SIZE / BLOCK_SIZE; // 8 bloques en total
 
-    // Create the grid dynamically
-    for (let i = 0; i < 200; i++) {
-        const square = document.createElement('div');
-        grid.appendChild(square);
-        squares.push(square);
+let freeMemory = MEMORY_SIZE; // Memoria libre
+let memoryBlocks = Array(TOTAL_BLOCKS).fill(null); // Representa los bloques de memoria
+
+// Colas de procesos
+let colaNuevos = [];
+let colaListos = [];
+let colaTerminados = [];
+
+// Elementos del DOM
+const memoriaLibre = document.getElementById('memoria-libre');
+const tablaProcesos = document.getElementById('tabla-procesos');
+const memoriaUI = document.getElementById('memoria');
+const tablaPaginacion = document.getElementById('tabla-paginacion');
+const btnCrearProceso = document.getElementById('crear-proceso');
+
+// Clase para representar un proceso
+class Process {
+    constructor(pid, memoryNeeded) {
+        this.pid = pid;
+        this.memoryNeeded = memoryNeeded;
+        this.inMemory = false;
+        this.duration = Math.random() * 3000 + 1000; // Simula duración entre 1s y 4s
+        this.state = 'Listo'; // Estado inicial
+        this.pages = []; // Páginas asignadas al proceso
     }
 
-    const colors = [
-        'orange',
-        'red',
-        'purple',
-        'green',
-        'blue'
-    ];
+    // Simulación de ejecución del proceso con barra de progreso
+    run() {
+        this.state = 'Ejecutando';
+        actualizarEstadosProcesos();
 
-    // Tetrominoes
-    const lTetromino = [
-        [1, width + 1, width * 2 + 1, 2],
-        [width, width + 1, width + 2, width * 2 + 2],
-        [1, width + 1, width * 2 + 1, width * 2],
-        [width, width * 2, width * 2 + 1, width * 2 + 2]
-    ];
+        const startTime = Date.now();
+        const interval = setInterval(() => {
+            let elapsedTime = Date.now() - startTime;
+            let progress = Math.min((elapsedTime / this.duration) * 100, 100); // Progreso en %
 
-    const zTetromino = [
-        [0, width, width + 1, width * 2 + 1],
-        [width + 1, width + 2, width * 2, width * 2 + 1],
-        [0, width, width + 1, width * 2 + 1],
-        [width + 1, width + 2, width * 2, width * 2 + 1]
-    ];
+            document.getElementById(`progress-${this.pid}`).style.width = `${progress}%`;
 
-    const tTetromino = [
-        [1, width, width + 1, width + 2],
-        [1, width + 1, width + 2, width * 2 + 1],
-        [width, width + 1, width + 2, width * 2 + 1],
-        [1, width, width + 1, width * 2 + 1]
-    ];
-
-    const oTetromino = [
-        [0, 1, width, width + 1],
-        [0, 1, width, width + 1],
-        [0, 1, width, width + 1],
-        [0, 1, width, width + 1]
-    ];
-
-    const iTetromino = [
-        [1, width + 1, width * 2 + 1, width * 3 + 1],
-        [width, width + 1, width + 2, width + 3],
-        [1, width + 1, width * 2 + 1, width * 3 + 1],
-        [width, width + 1, width + 2, width + 3]
-    ];
-
-    const theTetrominoes = [lTetromino, zTetromino, tTetromino, oTetromino, iTetromino];
-
-    let currentPosition = 4;
-    let currentRotation = 0;
-
-    // Randomly select a Tetromino and its first rotation
-    let random = Math.floor(Math.random() * theTetrominoes.length);
-    let current = theTetrominoes[random][currentRotation];
-
-    // Draw the Tetromino
-    function draw() {
-        current.forEach(index => {
-            squares[currentPosition + index].classList.add('tetromino');
-            squares[currentPosition + index].style.backgroundColor = colors[random];
-        });
+            if (progress >= 100) {
+                clearInterval(interval);
+                this.state = 'Terminado';
+                liberarMemoria(this);
+                actualizarEstadosProcesos();
+                verificarColaNuevos();
+            }
+        }, 100);
     }
+}
 
-    // Undraw the Tetromino
-    function undraw() {
-        current.forEach(index => {
-            squares[currentPosition + index].classList.remove('tetromino');
-            squares[currentPosition + index].style.backgroundColor = '';
-        });
-    }
+// Función para actualizar la memoria libre en el DOM
+function actualizarMemoriaLibre() {
+    memoriaLibre.textContent = `Memoria Libre: ${freeMemory} MB`;
+}
 
-    // Assign functions to keyCodes
-    function control(e) {
-        if (e.keyCode === 37) {
-            moveLeft();
-        } else if (e.keyCode === 38) {
-            rotate();
-        } else if (e.keyCode === 39) {
-            moveRight();
-        } else if (e.keyCode === 40) {
-            moveDown();
-        }
-    }
-    document.addEventListener('keydown', control);
+// Función para actualizar los estados de los procesos en la tabla
+function actualizarEstadosProcesos() {
+    tablaProcesos.innerHTML = colaListos.map(proceso => `
+        <tr>
+            <td class="border px-4 py-2">Proceso ${proceso.pid}</td>
+            <td class="border px-4 py-2">${proceso.memoryNeeded} MB</td>
+            <td class="border px-4 py-2">${proceso.state}</td>
+            <td class="border px-4 py-2">
+                <div class="w-full bg-gray-200 rounded-full h-4">
+                    <div id="progress-${proceso.pid}" class="bg-blue-500 h-4 rounded-full" style="width: 0%;"></div>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
 
-    // Move down function
-    function moveDown() {
-        undraw();
-        currentPosition += width;
-        draw();
-        freeze();
-    }
+// Función para asignar memoria a un proceso
+function asignarMemoria(proceso) {
+    const blocksNeeded = Math.ceil(proceso.memoryNeeded / BLOCK_SIZE);
 
-    // Freeze function
-    function freeze() {
-        if (current.some(index => squares[currentPosition + index + width].classList.contains('taken'))) {
-            current.forEach(index => squares[currentPosition + index].classList.add('taken'));
-            // Start a new Tetromino falling
-            random = Math.floor(Math.random() * theTetrominoes.length);
-            current = theTetrominoes[random][currentRotation];
-            currentPosition = 4;
-            draw();
-            addScore();
-            gameOver();
-        }
-    }
-
-    // Move the Tetromino left, unless it is at the edge or there is a blockage
-    function moveLeft() {
-        undraw();
-        const isAtLeftEdge = current.some(index => (currentPosition + index) % width === 0);
-        if (!isAtLeftEdge) currentPosition -= 1;
-        if (current.some(index => squares[currentPosition + index].classList.contains('taken'))) {
-            currentPosition += 1;
-        }
-        draw();
-    }
-
-    // Move the Tetromino right, unless it is at the edge or there is a blockage
-    function moveRight() {
-        undraw();
-        const isAtRightEdge = current.some(index => (currentPosition + index) % width === width - 1);
-        if (!isAtRightEdge) currentPosition += 1;
-        if (current.some(index => squares[currentPosition + index].classList.contains('taken'))) {
-            currentPosition -= 1;
-        }
-        draw();
-    }
-
-    // Rotate the Tetromino
-    function rotate() {
-        undraw();
-        currentRotation++;
-        if (currentRotation === current.length) {
-            currentRotation = 0;
-        }
-        current = theTetrominoes[random][currentRotation];
-        draw();
-    }
-
-    // Add score
-    function addScore() {
-        for (let i = 0; i < 199; i += width) {
-            const row = [i, i + 1, i + 2, i + 3, i + 4, i + 5, i + 6, i + 7, i + 8, i + 9];
-            if (row.every(index => squares[index].classList.contains('taken'))) {
-                score += 10;
-                scoreDisplay.innerHTML = score;
-                row.forEach(index => {
-                    squares[index].classList.remove('taken');
-                    squares[index].classList.remove('tetromino');
-                    squares[index].style.backgroundColor = '';
-                });
-                const squaresRemoved = squares.splice(i, width);
-                squares = squaresRemoved.concat(squares);
-                squares.forEach(cell => grid.appendChild(cell));
+    if (blocksNeeded <= getFreeBlocks()) {
+        for (let i = 0; i < TOTAL_BLOCKS && proceso.pages.length < blocksNeeded; i++) {
+            if (memoryBlocks[i] === null) {
+                memoryBlocks[i] = proceso.pid;
+                proceso.pages.push(i); // Asignar página
             }
         }
-    }
 
-    // Game over
-    function gameOver() {
-        if (current.some(index => squares[currentPosition + index].classList.contains('taken'))) {
-            scoreDisplay.innerHTML = 'fin';
-            clearInterval(timerId);
+        freeMemory -= blocksNeeded * BLOCK_SIZE;
+        proceso.inMemory = true;
+        proceso.state = 'Ejecutando';
+        colaListos.push(proceso);
+        actualizarMemoriaLibre();
+        actualizarEstadosProcesos();
+        actualizarMemoria();
+        actualizarTablaPaginacion(proceso);
+        proceso.run();
+    } else {
+        colaNuevos.push(proceso);
+        actualizarColaNuevos();
+    }
+}
+
+// Función para liberar memoria
+function liberarMemoria(proceso) {
+    proceso.pages.forEach(page => {
+        memoryBlocks[page] = null;
+    });
+    freeMemory += proceso.pages.length * BLOCK_SIZE;
+    colaListos = colaListos.filter(p => p.pid !== proceso.pid);
+    colaTerminados.push(proceso);
+    actualizarMemoriaLibre();
+    actualizarMemoria();
+    actualizarTablaTerminados();
+}
+
+// Función para verificar los bloques de memoria libre
+function getFreeBlocks() {
+    return memoryBlocks.filter(block => block === null).length;
+}
+
+// Función para visualizar la memoria en el DOM
+function actualizarMemoria() {
+    memoriaUI.innerHTML = memoryBlocks.map((block, index) => `
+        <div class="h-16 w-16 border flex items-center justify-center text-sm ${block !== null ? 'bg-green-500 text-white' : 'bg-gray-200'}">
+            ${block !== null ? `P${block}` : 'Libre'}
+        </div>
+    `).join('');
+}
+
+// Función para visualizar la tabla de paginación
+function actualizarTablaPaginacion(proceso) {
+    tablaPaginacion.innerHTML += proceso.pages.map((page, index) => `
+        <tr>
+            <td class="border px-4 py-2">Proceso ${proceso.pid}</td>
+            <td class="border px-4 py-2">Página ${index + 1}</td>
+            <td class="border px-4 py-2">Bloque ${page}</td>
+        </tr>
+    `).join('');
+}
+
+// Función para visualizar la cola de nuevos
+function actualizarColaNuevos() {
+    document.getElementById('cola-nuevos').innerHTML = colaNuevos.map(proceso => `
+        <li>Proceso ${proceso.pid} (${proceso.memoryNeeded} MB)</li>
+    `).join('');
+}
+
+// Función para intentar mover procesos de la cola de nuevos a la cola de listos
+function verificarColaNuevos() {
+    if (colaNuevos.length > 0) {
+        const proceso = colaNuevos[0];
+        if (proceso.memoryNeeded <= freeMemory) {
+            colaNuevos.shift(); // Elimina el proceso de la cola de nuevos
+            asignarMemoria(proceso);
+            actualizarColaNuevos();
         }
     }
+}
 
-    draw();
-    timerId = setInterval(moveDown, 1000);
-});
+// Función para actualizar la tabla de procesos terminados
+function actualizarTablaTerminados() {
+    // Puedes agregar aquí la lógica para mostrar procesos terminados si es necesario
+}
+
+// Función para crear un nuevo proceso
+function crearProceso() {
+    const pid = colaNuevos.length + colaListos.length + colaTerminados.length + 1;
+    const memoryNeeded = Math.floor(Math.random() * 256) + 64; // Necesidades de memoria entre 64 y 320 MB
+    const proceso = new Process(pid, memoryNeeded);
+    asignarMemoria(proceso);
+}
+
+// Evento para crear procesos
+btnCrearProceso.addEventListener('click', crearProceso);
