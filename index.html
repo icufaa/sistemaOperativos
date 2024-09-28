@@ -3,67 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador de Procesos y Memoria</title>
+    <title>Simulador de Gestión de Memoria</title>
     <script defer src="script.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-900 text-white">
 
-    <div class="container mx-auto p-4">
-        <h1 class="text-3xl font-bold text-center mb-6">Simulador de Gestión de Procesos y Memoria</h1>
+    <!-- Contenedor principal -->
+    <div class="container mx-auto py-8">
 
-        <!-- Información del sistema -->
-        <div class="bg-white shadow-md rounded-lg p-4 mb-6">
-            <h2 class="text-2xl font-semibold mb-4">Información del Sistema</h2>
-            <p id="memoria-libre" class="text-xl">Memoria Libre: 1024 MB</p>
+        <!-- Título -->
+        <h1 class="text-3xl font-bold mb-4">Simulador de Gestión de Memoria</h1>
+
+        <!-- Selector para paginación/compactación -->
+        <div class="mb-4">
+            <label for="selector-compactacion" class="block mb-2">Método de Administración de Memoria:</label>
+            <select id="selector-compactacion" class="p-2 rounded bg-gray-800 text-white">
+                <option value="paginacion">Paginación</option>
+                <option value="compactacion">Compactación</option>
+            </select>
         </div>
 
-        <!-- Tabla de estados de los procesos -->
-        <div class="bg-white shadow-md rounded-lg p-4 mb-6">
-            <h2 class="text-xl font-semibold mb-4">Estados de los Procesos</h2>
-            <table class="table-auto w-full text-left">
+        <!-- Botones para seleccionar el tamaño de la memoria -->
+        <div class="mb-4">
+            <label for="memoria-tamano" class="block mb-2">Tamaño de Memoria:</label>
+            <button id="memoria-512" class="px-4 py-2 bg-blue-500 rounded text-white mr-2">512 MB</button>
+            <button id="memoria-1024" class="px-4 py-2 bg-green-500 rounded text-white mr-2">1024 MB</button>
+            <button id="memoria-2048" class="px-4 py-2 bg-red-500 rounded text-white">2048 MB</button>
+        </div>
+
+        <!-- Información de la memoria libre -->
+        <div class="mb-4">
+            <h2 id="memoria-libre" class="text-xl font-semibold">Memoria Libre: 1024 MB</h2>
+        </div>
+
+        <!-- Botón para liberar manualmente la memoria de un proceso -->
+        <div class="mt-4">
+            <button id="liberar-memoria" class="px-4 py-2 bg-yellow-500 rounded text-white mr-2">Liberar Memoria</button>
+            <button id="limpiar-procesos" class="px-4 py-2 bg-red-500 rounded text-white">Limpiar Todos los Procesos</button>
+        </div>
+
+        <!-- Tabla para mostrar los procesos -->
+        <div class="mb-4">
+            <h2 class="text-xl font-semibold mb-2">Procesos:</h2>
+            <table id="tabla-procesos" class="w-full bg-gray-800 text-white">
                 <thead>
                     <tr>
-                        <th class="px-4 py-2">Proceso</th>
-                        <th class="px-4 py-2">Memoria</th>
-                        <th class="px-4 py-2">Estado</th>
-                        <th class="px-4 py-2">Progreso</th>
+                        <th class="border px-4 py-2">ID Proceso</th>
+                        <th class="border px-4 py-2">Memoria Necesaria</th>
+                        <th class="border px-4 py-2">Estado</th>
+                        <th class="border px-4 py-2">Progreso</th>
                     </tr>
                 </thead>
-                <tbody id="tabla-procesos">
-                    <!-- Filas de procesos -->
+                <tbody>
+                    <!-- Aquí se añadirán los procesos dinámicamente -->
                 </tbody>
             </table>
         </div>
 
         <!-- Visualización de la memoria -->
-        <div class="bg-white shadow-md rounded-lg p-4 mb-6">
-            <h2 class="text-xl font-semibold mb-4">Memoria Principal</h2>
-            <div id="memoria" class="grid grid-cols-8 gap-1">
-                <!-- Visualización de bloques de memoria -->
-            </div>
+        <div id="memoria" class="grid grid-cols-8 gap-2 mb-4">
+            <!-- Aquí se representarán los bloques de memoria -->
         </div>
 
-        <!-- Tabla de Paginación -->
-        <div class="bg-white shadow-md rounded-lg p-4">
-            <h2 class="text-xl font-semibold mb-4">Tabla de Páginas</h2>
-            <table class="table-auto w-full text-left">
+        <!-- Cola de procesos nuevos -->
+        <div class="mb-4">
+            <h2 class="text-xl font-semibold">Cola de Nuevos Procesos:</h2>
+            <ul id="cola-nuevos" class="list-disc pl-5">
+                <!-- Aquí se mostrarán los procesos en cola -->
+            </ul>
+        </div>
+
+        <!-- Tabla de paginación -->
+        <div class="mb-4">
+            <h2 class="text-xl font-semibold">Tabla de Paginación:</h2>
+            <table id="tabla-paginacion" class="w-full bg-gray-800 text-white">
                 <thead>
                     <tr>
-                        <th class="px-4 py-2">Proceso</th>
-                        <th class="px-4 py-2">Página</th>
-                        <th class="px-4 py-2">Bloque de Memoria</th>
+                        <th class="border px-4 py-2">ID Proceso</th>
+                        <th class="border px-4 py-2">Página</th>
+                        <th class="border px-4 py-2">Bloque</th>
                     </tr>
                 </thead>
-                <tbody id="tabla-paginacion">
-                    <!-- Filas de la tabla de páginas -->
+                <tbody>
+                    <!-- Aquí se añadirán las páginas dinámicamente -->
                 </tbody>
             </table>
         </div>
 
-        <!-- Botón para crear procesos -->
-        <div class="mt-6 flex justify-center">
-            <button id="crear-proceso" class="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700">Crear Proceso</button>
+        <!-- Botón para crear un nuevo proceso -->
+        <div>
+            <button id="crear-proceso" class="px-4 py-2 bg-purple-500 rounded text-white">Crear Proceso</button>
         </div>
     </div>
 

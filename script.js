@@ -1,22 +1,45 @@
 // Configuración inicial
-const MEMORY_SIZE = 1024; // Tamaño de la memoria principal
+let MEMORY_SIZE = 1024; // Tamaño de la memoria (configurable)
 const BLOCK_SIZE = 128; // Cada bloque es de 128MB
-const TOTAL_BLOCKS = MEMORY_SIZE / BLOCK_SIZE; // 8 bloques en total
+let totalBlocks = MEMORY_SIZE / BLOCK_SIZE;
+let freeMemory = MEMORY_SIZE;
+let memoryBlocks = Array(totalBlocks).fill(null);
 
-let freeMemory = MEMORY_SIZE; // Memoria libre
-let memoryBlocks = Array(TOTAL_BLOCKS).fill(null); // Representa los bloques de memoria
+// Variables adicionales
+let exclusiónMutua = false; // Controla la exclusión mutua
+let modoCompactacion = false; // Indica si se está usando compactación o paginación
 
 // Colas de procesos
 let colaNuevos = [];
 let colaListos = [];
+let colaBloqueados = [];
 let colaTerminados = [];
 
-// Elementos del DOM
+// Elementos del DOM adicionales
+const selectorCompactacion = document.getElementById('selector-compactacion');
+const btnMemoria512 = document.getElementById('memoria-512');
+const btnMemoria1024 = document.getElementById('memoria-1024');
+const btnMemoria2048 = document.getElementById('memoria-2048');
 const memoriaLibre = document.getElementById('memoria-libre');
 const tablaProcesos = document.getElementById('tabla-procesos');
 const memoriaUI = document.getElementById('memoria');
 const tablaPaginacion = document.getElementById('tabla-paginacion');
 const btnCrearProceso = document.getElementById('crear-proceso');
+const btnLiberarMemoria = document.getElementById('liberar-memoria');
+const btnLimpiarProcesos = document.getElementById('limpiar-procesos');
+
+
+// Depuración para verificar el evento click del botón
+btnCrearProceso.addEventListener('click', () => {
+    console.log('Botón "Crear Proceso" presionado'); // Mensaje para depuración
+
+    const memoryNeeded = Math.floor(Math.random() * 256) + 128; // Memoria entre 128MB y 384MB
+    const pid = Math.floor(Math.random() * 10000);
+    const proceso = new Process(pid, memoryNeeded);
+    
+    asignarMemoria(proceso); // Asignar memoria al nuevo proceso
+    actualizarEstadosProcesos(); // Actualizar la tabla de procesos
+});
 
 // Clase para representar un proceso
 class Process {
@@ -26,7 +49,7 @@ class Process {
         this.inMemory = false;
         this.duration = Math.random() * 3000 + 1000; // Simula duración entre 1s y 4s
         this.state = 'Listo'; // Estado inicial
-        this.pages = []; // Páginas asignadas al proceso
+        this.pages = [];
     }
 
     // Simulación de ejecución del proceso con barra de progreso
@@ -52,36 +75,15 @@ class Process {
     }
 }
 
-// Función para actualizar la memoria libre en el DOM
-function actualizarMemoriaLibre() {
-    memoriaLibre.textContent = `Memoria Libre: ${freeMemory} MB`;
-}
-
-// Función para actualizar los estados de los procesos en la tabla
-function actualizarEstadosProcesos() {
-    tablaProcesos.innerHTML = colaListos.map(proceso => `
-        <tr>
-            <td class="border px-4 py-2">Proceso ${proceso.pid}</td>
-            <td class="border px-4 py-2">${proceso.memoryNeeded} MB</td>
-            <td class="border px-4 py-2">${proceso.state}</td>
-            <td class="border px-4 py-2">
-                <div class="w-full bg-gray-200 rounded-full h-4">
-                    <div id="progress-${proceso.pid}" class="bg-blue-500 h-4 rounded-full" style="width: 0%;"></div>
-                </div>
-            </td>
-        </tr>
-    `).join('');
-}
-
 // Función para asignar memoria a un proceso
 function asignarMemoria(proceso) {
     const blocksNeeded = Math.ceil(proceso.memoryNeeded / BLOCK_SIZE);
 
     if (blocksNeeded <= getFreeBlocks()) {
-        for (let i = 0; i < TOTAL_BLOCKS && proceso.pages.length < blocksNeeded; i++) {
+        for (let i = 0; i < totalBlocks && proceso.pages.length < blocksNeeded; i++) {
             if (memoryBlocks[i] === null) {
                 memoryBlocks[i] = proceso.pid;
-                proceso.pages.push(i); // Asignar página
+                proceso.pages.push(i);
             }
         }
 
@@ -100,75 +102,150 @@ function asignarMemoria(proceso) {
     }
 }
 
-// Función para liberar memoria
-function liberarMemoria(proceso) {
-    proceso.pages.forEach(page => {
-        memoryBlocks[page] = null;
+// Funciones de apoyo (actualización de memoria, tablas, etc.)
+function actualizarEstadosProcesos() {
+    const tbody = tablaProcesos.querySelector('tbody');
+    tbody.innerHTML = '';
+
+    colaListos.concat(colaNuevos).forEach(proceso => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td class="border px-4 py-2">${proceso.pid}</td>
+            <td class="border px-4 py-2">${proceso.memoryNeeded} MB</td>
+            <td class="border px-4 py-2">${proceso.state}</td>
+            <td class="border px-4 py-2">
+                <div class="w-full bg-gray-700">
+                    <div id="progress-${proceso.pid}" class="bg-green-500 h-4" style="width: 0%"></div>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
     });
-    freeMemory += proceso.pages.length * BLOCK_SIZE;
-    colaListos = colaListos.filter(p => p.pid !== proceso.pid);
-    colaTerminados.push(proceso);
-    actualizarMemoriaLibre();
-    actualizarMemoria();
-    actualizarTablaTerminados();
 }
 
-// Función para verificar los bloques de memoria libre
+function actualizarMemoria() {
+    memoriaUI.innerHTML = '';
+    memoryBlocks.forEach((block, index) => {
+        const blockDiv = document.createElement('div');
+        blockDiv.className = block === null ? 'bg-gray-600' : 'bg-green-500';
+        blockDiv.textContent = block === null ? '' : block;
+        memoriaUI.appendChild(blockDiv);
+    });
+}
+
+function actualizarMemoriaLibre() {
+    memoriaLibre.textContent = `Memoria Libre: ${freeMemory} MB`;
+}
+
+function actualizarColaNuevos() {
+    const listaColaNuevos = document.getElementById('cola-nuevos');
+    listaColaNuevos.innerHTML = '';
+    colaNuevos.forEach(proceso => {
+        const listItem = document.createElement('li');
+        listItem.textContent = `Proceso ${proceso.pid} (${proceso.memoryNeeded} MB)`;
+        listaColaNuevos.appendChild(listItem);
+    });
+}
+
+function actualizarTablaPaginacion(proceso) {
+    const tbody = tablaPaginacion.querySelector('tbody');
+    proceso.pages.forEach((block, pageIndex) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td class="border px-4 py-2">${proceso.pid}</td>
+            <td class="border px-4 py-2">${pageIndex}</td>
+            <td class="border px-4 py-2">${block}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function liberarMemoria(proceso) {
+    proceso.pages.forEach(block => {
+        memoryBlocks[block] = null;
+    });
+    freeMemory += proceso.memoryNeeded;
+    actualizarMemoriaLibre();
+    actualizarMemoria();
+}
+
+function verificarColaNuevos() {
+    if (colaNuevos.length > 0) {
+        const procesoEnCola = colaNuevos.shift();
+        asignarMemoria(procesoEnCola);
+    }
+}
+
 function getFreeBlocks() {
     return memoryBlocks.filter(block => block === null).length;
 }
 
-// Función para visualizar la memoria en el DOM
-function actualizarMemoria() {
-    memoriaUI.innerHTML = memoryBlocks.map((block, index) => `
-        <div class="h-16 w-16 border flex items-center justify-center text-sm ${block !== null ? 'bg-green-500 text-white' : 'bg-gray-200'}">
-            ${block !== null ? `P${block}` : 'Libre'}
-        </div>
-    `).join('');
-}
-
-// Función para visualizar la tabla de paginación
-function actualizarTablaPaginacion(proceso) {
-    tablaPaginacion.innerHTML += proceso.pages.map((page, index) => `
-        <tr>
-            <td class="border px-4 py-2">Proceso ${proceso.pid}</td>
-            <td class="border px-4 py-2">Página ${index + 1}</td>
-            <td class="border px-4 py-2">Bloque ${page}</td>
-        </tr>
-    `).join('');
-}
-
-// Función para visualizar la cola de nuevos
-function actualizarColaNuevos() {
-    document.getElementById('cola-nuevos').innerHTML = colaNuevos.map(proceso => `
-        <li>Proceso ${proceso.pid} (${proceso.memoryNeeded} MB)</li>
-    `).join('');
-}
-
-// Función para intentar mover procesos de la cola de nuevos a la cola de listos
-function verificarColaNuevos() {
-    if (colaNuevos.length > 0) {
-        const proceso = colaNuevos[0];
-        if (proceso.memoryNeeded <= freeMemory) {
-            colaNuevos.shift(); // Elimina el proceso de la cola de nuevos
-            asignarMemoria(proceso);
-            actualizarColaNuevos();
+// Función para liberar manualmente la memoria de un proceso seleccionado
+btnLiberarMemoria.addEventListener('click', () => {
+    // Preguntamos el ID del proceso a liberar
+    const procesoId = prompt('Ingrese el ID del proceso a liberar:');
+    if (procesoId) {
+        // Buscamos el proceso en la cola de listos o ejecutando
+        const proceso = colaListos.find(p => p.pid == procesoId);
+        if (proceso && proceso.inMemory) {
+            liberarMemoria(proceso);
+            // Movemos el proceso a la cola de terminados y lo quitamos de los listos
+            proceso.state = 'Terminado';
+            colaTerminados.push(proceso);
+            colaListos = colaListos.filter(p => p.pid !== procesoId);
+            actualizarEstadosProcesos(); // Refrescamos la tabla
+            alert(`Proceso ${procesoId} liberado con éxito.`);
+        } else {
+            alert('Proceso no encontrado o ya no está en memoria.');
         }
     }
-}
+});
 
-// Función para actualizar la tabla de procesos terminados
-function actualizarTablaTerminados() {
-    // Puedes agregar aquí la lógica para mostrar procesos terminados si es necesario
-}
 
-// Función para crear un nuevo proceso
-function crearProceso() {
-    const pid = colaNuevos.length + colaListos.length + colaTerminados.length + 1;
-    const memoryNeeded = Math.floor(Math.random() * 256) + 64; // Necesidades de memoria entre 64 y 320 MB
-    const proceso = new Process(pid, memoryNeeded);
-    asignarMemoria(proceso);
-}
+// Función para limpiar solo los procesos que están terminados
+btnLimpiarProcesos.addEventListener('click', () => {
+    if (colaTerminados.length === 0) {
+        alert('No hay procesos terminados para limpiar.');
+        return;
+    }
 
-// Evento para crear procesos
-btnCrearProceso.addEventListener('click', crearProceso);
+    // Limpiamos solo los procesos terminados
+    colaTerminados.forEach(proceso => {
+        liberarMemoria(proceso);  // Liberamos la memoria ocupada por cada proceso terminado
+    });
+
+    // Vaciamos la cola de procesos terminados
+    colaTerminados = [];
+
+    // Actualizamos la interfaz
+    actualizarMemoriaLibre();
+    actualizarMemoria();
+    actualizarEstadosProcesos();
+    actualizarColaNuevos();
+    actualizarTablaPaginacion();
+
+    alert('Los procesos terminados han sido limpiados.');
+});
+
+
+
+
+
+// Otros eventos del DOM (selector de compactación y botones de tamaño de memoria)
+selectorCompactacion.addEventListener('change', (event) => {
+    modoCompactacion = event.target.value === 'compactacion';
+    console.log('Modo de administración de memoria:', modoCompactacion ? 'Compactación' : 'Paginación');
+});
+
+btnMemoria512.addEventListener('click', () => configurarMemoria(512));
+btnMemoria1024.addEventListener('click', () => configurarMemoria(1024));
+btnMemoria2048.addEventListener('click', () => configurarMemoria(2048));
+
+function configurarMemoria(tamano) {
+    MEMORY_SIZE = tamano;
+    totalBlocks = MEMORY_SIZE / BLOCK_SIZE;
+    freeMemory = MEMORY_SIZE;
+    memoryBlocks = Array(totalBlocks).fill(null);
+    actualizarMemoriaLibre();
+    actualizarMemoria();
+}
