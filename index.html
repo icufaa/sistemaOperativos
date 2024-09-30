@@ -17,42 +17,41 @@
 
         <!-- Selector para paginación/compactación -->
         <div class="mb-4">
-            <label for="selector-compactacion" class="block mb-2">Método de Administración de Memoria:</label>
-            <select id="selector-compactacion" class="p-2 rounded bg-gray-800 text-white">
+            <label for="selector-compactacion" class="block mb-2 text-gray-400">Método de Administración de Memoria:</label>
+            <select id="selector-compactacion" class="p-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-blue-500 transition-colors duration-300">
                 <option value="paginacion">Paginación</option>
                 <option value="compactacion">Compactación</option>
             </select>
         </div>
 
         <!-- Botones para seleccionar el tamaño de la memoria -->
-        <div class="mb-4">
-            <label for="memoria-tamano" class="block mb-2">Tamaño de Memoria:</label>
-            <button id="memoria-512" class="px-4 py-2 bg-blue-500 rounded text-white mr-2">512 MB</button>
-            <button id="memoria-1024" class="px-4 py-2 bg-green-500 rounded text-white mr-2">1024 MB</button>
-            <button id="memoria-2048" class="px-4 py-2 bg-red-500 rounded text-white">2048 MB</button>
+        <div class="mb-4 flex space-x-4">
+            <button id="memoria-512" class="px-4 py-2 bg-blue-500 rounded-lg text-white shadow-lg transform hover:scale-105 transition-transform duration-300">512 MB</button>
+            <button id="memoria-1024" class="px-4 py-2 bg-green-500 rounded-lg text-white shadow-lg transform hover:scale-105 transition-transform duration-300">1024 MB</button>
+            <button id="memoria-2048" class="px-4 py-2 bg-red-500 rounded-lg text-white shadow-lg transform hover:scale-105 transition-transform duration-300">2048 MB</button>
         </div>
 
         <!-- Información de la memoria libre -->
         <div class="mb-4">
-            <h2 id="memoria-libre" class="text-xl font-semibold">Memoria Libre: 1024 MB</h2>
+            <h2 id="memoria-libre" class="text-xl font-semibold text-gray-400">Memoria Libre: 1024 MB</h2>
         </div>
 
         <!-- Botón para liberar manualmente la memoria de un proceso -->
         <div class="mt-4">
-            <button id="liberar-memoria" class="px-4 py-2 bg-yellow-500 rounded text-white mr-2">Liberar Memoria</button>
-            <button id="limpiar-procesos" class="px-4 py-2 bg-red-500 rounded text-white">Limpiar Todos los Procesos</button>
+            <button id="liberar-memoria" class="px-4 py-2 bg-yellow-500 rounded-lg text-white shadow-lg transform hover:scale-105 transition-transform duration-300 mr-2">Liberar Memoria</button>
+            <button id="limpiar-procesos" class="px-4 py-2 bg-red-500 rounded-lg text-white shadow-lg transform hover:scale-105 transition-transform duration-300">Limpiar Todos los Procesos</button>
         </div>
 
         <!-- Tabla para mostrar los procesos -->
         <div class="mb-4">
-            <h2 class="text-xl font-semibold mb-2">Procesos:</h2>
-            <table id="tabla-procesos" class="w-full bg-gray-800 text-white">
+            <h2 class="text-xl font-semibold mb-2 text-gray-400">Procesos:</h2>
+            <table id="tabla-procesos" class="w-full bg-gray-800 text-white rounded-lg shadow-lg">
                 <thead>
-                    <tr>
-                        <th class="border px-4 py-2">ID Proceso</th>
-                        <th class="border px-4 py-2">Memoria Necesaria</th>
-                        <th class="border px-4 py-2">Estado</th>
-                        <th class="border px-4 py-2">Progreso</th>
+                    <tr class="bg-gray-700">
+                        <th class="border border-gray-600 px-4 py-2 text-gray-300">ID Proceso</th>
+                        <th class="border border-gray-600 px-4 py-2 text-gray-300">Memoria Necesaria</th>
+                        <th class="border border-gray-600 px-4 py-2 text-gray-300">Estado</th>
+                        <th class="border border-gray-600 px-4 py-2 text-gray-300">Progreso</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -68,21 +67,21 @@
 
         <!-- Cola de procesos nuevos -->
         <div class="mb-4">
-            <h2 class="text-xl font-semibold">Cola de Nuevos Procesos:</h2>
-            <ul id="cola-nuevos" class="list-disc pl-5">
+            <h2 class="text-xl font-semibold text-gray-400">Cola de Nuevos Procesos:</h2>
+            <ul id="cola-nuevos" class="list-disc pl-5 text-gray-300">
                 <!-- Aquí se mostrarán los procesos en cola -->
             </ul>
         </div>
 
         <!-- Tabla de paginación -->
         <div class="mb-4">
-            <h2 class="text-xl font-semibold">Tabla de Paginación:</h2>
-            <table id="tabla-paginacion" class="w-full bg-gray-800 text-white">
+            <h2 class="text-xl font-semibold text-gray-400">Tabla de Paginación:</h2>
+            <table id="tabla-paginacion" class="w-full bg-gray-800 text-white rounded-lg shadow-lg">
                 <thead>
-                    <tr>
-                        <th class="border px-4 py-2">ID Proceso</th>
-                        <th class="border px-4 py-2">Página</th>
-                        <th class="border px-4 py-2">Bloque</th>
+                    <tr class="bg-gray-700">
+                        <th class="border border-gray-600 px-4 py-2 text-gray-300">ID Proceso</th>
+                        <th class="border border-gray-600 px-4 py-2 text-gray-300">Página</th>
+                        <th class="border border-gray-600 px-4 py-2 text-gray-300">Bloque</</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -92,8 +91,11 @@
         </div>
 
         <!-- Botón para crear un nuevo proceso -->
-        <div>
-            <button id="crear-proceso" class="px-4 py-2 bg-purple-500 rounded text-white">Crear Proceso</button>
+        <div class="flex justify-end space-x-4">
+            <button id="crear-proceso" class="px-4 py-2 bg-purple-500 rounded-lg text-white shadow-lg transform hover:scale-105 transition-transform duration-300">Crear Proceso</button>
+            
+            <!-- Botón para resetear el simulador -->
+            <button id="reset-simulador" class="px-4 py-2 bg-gray-600 rounded-lg text-white shadow-lg transform hover:scale-105 transition-transform duration-300">Resetear Simulador</button>
         </div>
     </div>
 

@@ -102,6 +102,39 @@ function asignarMemoria(proceso) {
     }
 }
 
+// Función para resetear completamente el simulador
+function resetearSimulador() {
+    // Limpiar todas las colas
+    colaNuevos = [];
+    colaListos = [];
+    colaBloqueados = [];
+    colaTerminados = [];
+
+    // Resetear la memoria
+    freeMemory = MEMORY_SIZE;
+    memoryBlocks = Array(totalBlocks).fill(null);
+
+    // Limpiar la interfaz de usuario
+    actualizarMemoriaLibre();
+    actualizarMemoria();
+    actualizarEstadosProcesos();
+    actualizarColaNuevos();
+    
+    // Limpiar la tabla de paginación
+    const tbodyPaginacion = tablaPaginacion.querySelector('tbody');
+    tbodyPaginacion.innerHTML = '';
+
+    alert('Simulador reseteado por completo.');
+}
+
+// Asignar evento al botón para resetear todo
+btnLimpiarProcesos.addEventListener('click', () => {
+    if (confirm('¿Estás seguro de que deseas resetear el simulador? Esto eliminará todos los procesos y restablecerá la memoria.')) {
+        resetearSimulador();
+    }
+});
+
+
 // Funciones de apoyo (actualización de memoria, tablas, etc.)
 function actualizarEstadosProcesos() {
     const tbody = tablaProcesos.querySelector('tbody');
