@@ -1,5 +1,5 @@
 // Configuración inicial
-let MEMORY_SIZE = 1024; // Tamaño de la memoria (configurable)
+let MEMORY_SIZE = 512; // Tamaño de la memoria (configurable)
 const BLOCK_SIZE = 128; // Cada bloque es de 128MB
 let totalBlocks = MEMORY_SIZE / BLOCK_SIZE;
 let freeMemory = MEMORY_SIZE;
