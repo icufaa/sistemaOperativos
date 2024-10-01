@@ -15,6 +15,11 @@
         <!-- Título -->
         <h1 class="text-3xl font-bold mb-4">Simulador de Gestión de Memoria</h1>
 
+        <!-- Barra roja de advertencia de memoria -->
+        <div id="advertencia-memoria" style="display: none; background-color: red; color: white; text-align: center;" class="p-2 rounded-lg mb-4">
+            Sin memoria disponible
+        </div>
+
         <!-- Selector para paginación/compactación -->
         <div class="mb-4">
             <label for="selector-compactacion" class="block mb-2 text-gray-400">Método de Administración de Memoria:</label>
@@ -93,9 +98,6 @@
         <!-- Botón para crear un nuevo proceso -->
         <div class="flex justify-end space-x-4">
             <button id="crear-proceso" class="px-4 py-2 bg-purple-500 rounded-lg text-white shadow-lg transform hover:scale-105 transition-transform duration-300">Crear Proceso</button>
-            
-            <!-- Botón para resetear el simulador -->
-            <button id="reset-simulador" class="px-4 py-2 bg-gray-600 rounded-lg text-white shadow-lg transform hover:scale-105 transition-transform duration-300">Resetear Simulador</button>
         </div>
     </div>
 

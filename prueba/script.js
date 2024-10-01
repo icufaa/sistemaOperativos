@@ -75,7 +75,7 @@ class Process {
     }
 }
 
-// Función para asignar memoria a un proceso
+// Funcion para asignar memoria a un proceso
 function asignarMemoria(proceso) {
     const blocksNeeded = Math.ceil(proceso.memoryNeeded / BLOCK_SIZE);
 
@@ -95,12 +95,16 @@ function asignarMemoria(proceso) {
         actualizarEstadosProcesos();
         actualizarMemoria();
         actualizarTablaPaginacion(proceso);
+        ocultarAdvertenciaMemoria(); // Ocultamos la advertencia si la memoria es suficiente
         proceso.run();
     } else {
-        colaNuevos.push(proceso);
-        actualizarColaNuevos();
+        proceso.state = 'Bloqueado';
+        colaBloqueados.push(proceso);
+        mostrarAdvertenciaMemoria(); // Mostramos la barra roja de advertencia
+        actualizarEstadosProcesos();
     }
 }
+
 
 // Función para resetear completamente el simulador
 function resetearSimulador() {
@@ -193,14 +197,19 @@ function actualizarTablaPaginacion(proceso) {
     });
 }
 
+// Funcion para que la memoria no quede negativa
 function liberarMemoria(proceso) {
     proceso.pages.forEach(block => {
-        memoryBlocks[block] = null;
+        memoryBlocks[block] = null; // Solo liberamos los bloques del proceso terminado
     });
-    freeMemory += proceso.memoryNeeded;
-    actualizarMemoriaLibre();
-    actualizarMemoria();
+    freeMemory += proceso.pages.length * BLOCK_SIZE; // Sumamos solo los bloques liberados de este proceso
+    proceso.pages = []; // Limpiamos las páginas del proceso
+    actualizarMemoriaLibre(); // Actualizamos el indicador de memoria libre
+    actualizarMemoria(); // Refrescamos la vista de la memoria
+    ocultarAdvertenciaMemoria(); // Ocultamos la advertencia de memoria si es necesario
 }
+
+
 
 function verificarColaNuevos() {
     if (colaNuevos.length > 0) {
@@ -212,6 +221,20 @@ function verificarColaNuevos() {
 function getFreeBlocks() {
     return memoryBlocks.filter(block => block === null).length;
 }
+
+// Funciones para mostrar/ocultar la barra roja de advertencia
+function mostrarAdvertenciaMemoria() {
+    const advertenciaMemoria = document.getElementById('advertencia-memoria');
+    advertenciaMemoria.style.display = 'block'; // Mostrar la barra roja
+}
+
+function ocultarAdvertenciaMemoria() {
+    const advertenciaMemoria = document.getElementById('advertencia-memoria');
+    advertenciaMemoria.style.display = 'none'; // Ocultar la barra roja
+}
+
+// Al iniciar, ocultamos la advertencia
+ocultarAdvertenciaMemoria();
 
 // Función para liberar manualmente la memoria de un proceso seleccionado
 btnLiberarMemoria.addEventListener('click', () => {
@@ -232,7 +255,14 @@ btnLiberarMemoria.addEventListener('click', () => {
             alert('Proceso no encontrado o ya no está en memoria.');
         }
     }
-});
+})
+
+function terminarProceso(proceso) {
+    proceso.state = 'Terminado';
+    liberarMemoria(proceso); // Liberamos solo la memoria del proceso que terminó
+    actualizarEstadosProcesos(); // Actualizamos los estados de todos los procesos
+}
+
 
 
 // Función para limpiar solo los procesos que están terminados

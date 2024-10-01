@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador de Gestión de Memoria</title>
+  <script defer src="app.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-900 text-white">
+  <div class="container mx-auto p-4">
+    <h1 class="text-2xl font-bold mb-4">Simulador de Gestión de Memoria</h1>
+
+    <!-- Botones para elegir entre paginación y compactación -->
+    <div class="mb-4">
+        <button id="paginacion" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">Paginación</button>
+        <button id="compactacion" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Compactación</button>
+        <button id="agregar-proceso" class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded ml-4">Agregar Proceso</button>
+        <button id="iniciar-ejecucion" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded ml-4">Iniciar Ejecución</button>
+        <button id="liberar-memoria" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded ml-4">Liberar Memoria</button>
+        <button id="reiniciar-simulador" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Reiniciar Simulador</button>
+      </div>
+      
+
+    <!-- Vista de procesos -->
+    <div class="grid grid-cols-4 gap-4">
+      <div>
+        <h2 class="text-xl mb-2">Cola de Nuevos</h2>
+        <ul id="cola-nuevos" class="bg-gray-800 p-2 rounded-lg h-40 overflow-auto"></ul>
+      </div>
+      <div>
+        <h2 class="text-xl mb-2">Cola de Listos</h2>
+        <ul id="cola-listos" class="bg-gray-800 p-2 rounded-lg h-40 overflow-auto"></ul>
+      </div>
+      <div>
+        <h2 class="text-xl mb-2">Cola de Bloqueados</h2>
+        <ul id="cola-bloqueados" class="bg-gray-800 p-2 rounded-lg h-40 overflow-auto"></ul>
+      </div>
+      <div>
+        <h2 class="text-xl mb-2">Cola de Terminados</h2>
+        <ul id="cola-terminados" class="bg-gray-800 p-2 rounded-lg h-40 overflow-auto"></ul>
+      </div>
+    </div>
+
+    <!-- Visualización de la memoria -->
+    <div class="mt-6">
+      <h2 class="text-xl mb-2">Memoria Principal</h2>
+      <div id="memoria-principal" class="bg-gray-700 h-20 rounded-lg"></div>
+    </div>
+
+    <!-- Tabla de páginas -->
+    <div class="mt-6">
+      <h2 class="text-xl mb-2">Tabla de Páginas</h2>
+      <table class="table-auto w-full text-left bg-gray-800 rounded-lg">
+        <thead class="bg-gray-700">
+          <tr>
+            <th class="px-4 py-2">Proceso</th>
+            <th class="px-4 py-2">Página</th>
+            <th class="px-4 py-2">Frame</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-paginas"></tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>
