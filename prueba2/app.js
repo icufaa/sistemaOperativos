@@ -72,24 +72,44 @@ function ejecutarProceso() {
     if (procesoListo) {
       procesoListo.estado = 'Ejecutando';
       actualizarColas();
-      
+
+      // Inicializar la barra de progreso
+      let progreso = 0;
+      const intervaloProgreso = setInterval(() => {
+        progreso += 10; // Incrementa el progreso en 10% cada 300 ms
+        document.getElementById('barra-progreso').style.width = `${progreso}%`;
+
+        if (progreso >= 100) {
+          clearInterval(intervaloProgreso); // Detiene el intervalo cuando se llega al 100%
+        }
+      }, 300); // Actualiza la barra cada 300 ms
+
       // Simula que hay un 30% de probabilidad de que el proceso se bloquee
       const probabilidades = Math.random() * 100; // Genera un número entre 0 y 100
       if (probabilidades < PROBABILIDAD_BLOQUEO) {
         // Proceso se bloquea
         procesoListo.estado = 'Bloqueado';
         document.getElementById('cola-bloqueados').innerHTML += `<li>${procesoListo.id} - ${procesoListo.tamaño} KB</li>`;
+        
+        // Detener la barra de progreso y continuar con el próximo proceso
+        clearInterval(intervaloProgreso);
+        document.getElementById('barra-progreso').style.width = '0%'; // Reinicia la barra de progreso
+        setTimeout(() => {
+          ejecutarProceso(); // Continúa ejecutando otros procesos
+        }, 1000);
       } else {
         // Proceso no se bloquea, se completa la ejecución
         setTimeout(() => {
           liberarMemoria(procesoListo);
         }, 3000); // Simula 3 segundos de ejecución
       }
-      
+
       actualizarColas();
     }
   }
 }
+
+
 
 // Función para liberar memoria cuando un proceso termina
 function liberarMemoria(proceso) {
@@ -103,7 +123,9 @@ function liberarMemoria(proceso) {
   reubicarProcesos();
 
   // Continuar ejecutando otros procesos si existen
-  ejecutarProceso();
+  setTimeout(() => {
+    ejecutarProceso();
+  }, 1000); // Retraso para permitir que el simulador continúe automáticamente
 }
 
 // Función para reubicar procesos de la cola de nuevos a la cola de listos
