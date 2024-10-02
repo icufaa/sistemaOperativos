@@ -110,7 +110,6 @@ function ejecutarProceso() {
 }
 
 
-
 // Función para liberar memoria cuando un proceso termina
 function liberarMemoria(proceso) {
   proceso.estado = 'Terminado';
@@ -123,9 +122,7 @@ function liberarMemoria(proceso) {
   reubicarProcesos();
 
   // Continuar ejecutando otros procesos si existen
-  setTimeout(() => {
-    ejecutarProceso();
-  }, 1000); // Retraso para permitir que el simulador continúe automáticamente
+  ejecutarProceso();
 }
 
 // Función para reubicar procesos de la cola de nuevos a la cola de listos
